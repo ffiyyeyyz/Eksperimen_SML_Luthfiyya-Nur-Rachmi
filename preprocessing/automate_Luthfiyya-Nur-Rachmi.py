@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, LabelEncoder
 
 # =========================
 # Load Data
@@ -86,18 +86,34 @@ def handle_outliers(df: pd.DataFrame) -> pd.DataFrame:
 def encode_categorical_features(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
     
+    le_country = LabelEncoder()
+    df['country_encoded'] = le_country.fit_transform(df['country'])
+    
+    df.drop(columns=['country'], inplace=True)
+    
+    # one-hot encoding untuk selain country
     categorical_cols = df.select_dtypes(
         include=['object', 'category']
     ).columns.tolist()
-   
-    categorical_cols.remove('is_canceled')
     
+    categorical_cols.remove('arrival_date_month')
     df = pd.get_dummies(
         df,
         columns=categorical_cols,
         drop_first=True
     )
     
+    # mapping bulan
+    month_mapping = {
+        'January': 1, 'February': 2, 'March': 3, 'April': 4,
+        'May': 5, 'June': 6, 'July': 7,
+        'August': 8, 'September': 9, 'October': 10,
+        'November': 11, 'December': 12
+    }
+    
+    df['arrival_date_month_num'] = df['arrival_date_month'].map(month_mapping)
+    df.drop(columns=['arrival_date_month'], inplace=True)
+        
     return df
 
 # =========================
@@ -154,3 +170,4 @@ if __name__ == "__main__":
         print(f"Error: File {input_file} tidak ditemukan.")
     except Exception as e:
         print(f"Terjadi kesalahan: {e}")
+
