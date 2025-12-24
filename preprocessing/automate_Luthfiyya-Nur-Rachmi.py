@@ -33,18 +33,6 @@ def initial_cleaning(df: pd.DataFrame) -> pd.DataFrame:
     
     return df
 
-
-
-# =========================
-# Konversi Tipe Data
-# =========================
-def conver_data_type(df: pd.DataFrame) -> pd.DataFrame:
-    df = df.copy()
-    
-    df['reservation_status_date'] = pd.to_datetime(df['reservation_status_date'])
-    
-    return df
-
 # =========================
 # Feature Engineering
 # =========================
@@ -57,6 +45,8 @@ def feature_engineering(df: pd.DataFrame) -> pd.DataFrame:
         bins=[-1, 0.5, 1.5, 3, df['lead_time'].max()],
         labels=['Very Short', 'Short', 'Medium', 'Long']
     )
+
+    df.drop('lead_time', axis=1, inplace=True)
     
     return df
 
@@ -86,6 +76,15 @@ def handle_outliers(df: pd.DataFrame) -> pd.DataFrame:
 def encode_categorical_features(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
     
+    df['reservation_status_date'] = pd.to_datetime(df['reservation_status_date'])
+    
+    df['reservation_status_date_ordinal'] = (
+        df['reservation_status_date'].map(pd.Timestamp.toordinal)
+    )
+    df.drop(columns=['reservation_status_date'], inplace=True)
+    
+    
+    # label encoding untuk country
     le_country = LabelEncoder()
     df['country_encoded'] = le_country.fit_transform(df['country'])
     
@@ -139,11 +138,10 @@ def standardize_features(df: pd.DataFrame) -> pd.DataFrame:
 # =========================
 def preprocess_pipeline(df: pd.DataFrame) -> pd.DataFrame:
     df = initial_cleaning(df)
-    df = conver_data_type(df)
     df = feature_engineering(df)
     df = handle_outliers(df)
-    df = encode_categorical_features(df)
     df = standardize_features(df)
+    df = encode_categorical_features(df)
     return df
 
 # =========================
@@ -170,4 +168,5 @@ if __name__ == "__main__":
         print(f"Error: File {input_file} tidak ditemukan.")
     except Exception as e:
         print(f"Terjadi kesalahan: {e}")
+
 
